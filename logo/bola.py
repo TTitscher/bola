@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 
 c = "#426174"
 w = 4.00
+r = 1.25
 dpi = 300
 
 fig, ax = plt.subplots()
@@ -13,16 +14,15 @@ ax.set_axis_off()
 # draw 4 'o's
 for i in range(4):
     ax.add_patch(plt.Circle((i * w, 0), 2, color=c, lw=0))
-    ax.add_patch(plt.Circle((i * w, 0), 1, color="w", lw=0))
+    ax.add_patch(plt.Circle((i * w, 0), r, color="w", lw=0))
 
 # ---- b ----
-ax.add_patch(plt.Rectangle((-2, 0), 1, 4, color=c, lw=0))
+ax.add_patch(plt.Rectangle((-2, 0), 2-r, 4, color=c, lw=0))
 # ---- o ----
 # ---- l ----
-ax.add_patch(plt.Rectangle((2 * w - 2, 0), 1, 4, color=c, lw=0))
-ax.add_patch(plt.Rectangle((2 * w - 1, 0), 3, 4, color="w", lw=0))
+ax.add_patch(plt.Rectangle((2 * w - 2, 0), 2-r, 4, color=c, lw=0))
+ax.add_patch(plt.Rectangle((2 * w - r, 0), 2+r, 4, color="w", lw=0))
 # ---- a ----
-ax.add_patch(plt.Rectangle((3 * w + 1, 0), 1, -2, color=c, lw=0))
-
+ax.add_patch(plt.Rectangle((3 * w + r, 0), 2-r, -2, color=c, lw=0))
 
 fig.savefig("bola.svg", bbox_inches="tight")
