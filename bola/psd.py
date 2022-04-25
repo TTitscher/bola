@@ -173,33 +173,12 @@ class GradingCurves:
 def n_largest(grading_curve, n):
     return grading_curve[-(n + 1) :]
 
+
 def build_grading_curve(radii, V):
     r = np.array(radii[::-1])
-    sphere_volumes = 4./3. * np.pi * r**3
+    sphere_volumes = 4.0 / 3.0 * np.pi * r ** 3
 
     sieve_pass_volumes = np.cumsum(sphere_volumes)
 
     V_offset = V - sieve_pass_volumes[-1]
-    return 2*r, (sieve_pass_volumes + V_offset) / V
-
-
-
-if __name__ == "__main__":
-    V_box = 50 ** 3
-    phi = 0.7
-
-    gc = n_largest(GradingCurves.A16, 5)
-    print(gc)
-    radii = sample_grading_curve(gc, V_box * phi)
-    
-    V_sampled = sphere_volume(radii)
-    V_expected = (1 - gc[0][1]) * phi * V_box
-
-    print(f"{V_expected = }\n{V_sampled  = }")
-
-    import matplotlib.pyplot as plt
-    plt.semilogx(*build_grading_curve(radii, V_box* phi), "-r", label="sampled")
-    plt.semilogx(*zip(*gc), ":kx", label="definition")
-    plt.legend()
-    plt.show()
-
+    return 2 * r, (sieve_pass_volumes + V_offset) / V
