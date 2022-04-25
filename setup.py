@@ -26,7 +26,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["tabulate", "numpy", "loguru", "scipy", "vtk"],
+    install_requires=["tabulate", "numpy", "loguru", "vtk", "tqdm"],
     extras_require={  # Optional
         "dev": ["black"],
         "test": ["pytest", "pytest-cov", "flake8"],
