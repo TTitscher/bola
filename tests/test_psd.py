@@ -1,4 +1,5 @@
 from bola import psd
+import numpy as np
 import pytest
 
 def test_volume():
@@ -12,5 +13,5 @@ def test_volume():
     V_expected = (1 - gc[0][1]) * phi * V_box
 
     assert V_sampled == pytest.approx(V_expected)
-    assert sorted(radii) == radii[::-1]
+    np.testing.assert_almost_equal(np.sort(radii)[::-1], radii)
 
