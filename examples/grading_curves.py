@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def main():
 
-    N_classes = 4
+    N_classes = 5
     d_max = 16
 
     gcs = [
@@ -28,7 +28,7 @@ def main():
         V_box = (factor * d_max)**3 
       
         for gc in gcs: 
-            radii = psd.sample_grading_curve(gc, V_box, chunk=10000)
+            radii = psd.sample_grading_curve(gc, V_box)
             d, v = zip(*gc)
             ax.semilogx(d, v, ":kx", label="target")
             ax.semilogx(*psd.build_grading_curve(radii, V_box), "-r", label="sampled")

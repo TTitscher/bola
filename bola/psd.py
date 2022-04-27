@@ -22,17 +22,21 @@ def _sample_grading_class(d_min, d_max, V, chunk=100, seed=None):
             # Adding the particles will not yet reach the target volume, so we
             # can add them all at once
             sampled_volume += vs
-            radii += list(rs)
+            radii.append(rs)
         else:
             # Almost reached the target volume. Adding particles one by one.
+            radii_tmp = []
             remaining_radii = cycle(rs)
             while sampled_volume < V:
                 r = next(remaining_radii)
-                sampled_volume += sphere_volume(r)
-                radii.append(r)
+                sampled_volume += 4.0 / 3.0 * np.pi * r ** 3
+                radii_tmp.append(r)
+            radii.append(np.array(radii_tmp))
             break
 
-    return sorted(radii)[::-1]
+    rs = np.concatenate(radii)
+    rs_sort = np.sort(rs)
+    return rs_sort[::-1]
 
 
 def sphere_volume(rs, dr=0.0):
@@ -42,7 +46,7 @@ def sphere_volume(rs, dr=0.0):
     return 4.0 / 3.0 * np.pi * np.sum((np.asarray(rs) + dr) ** 3)
 
 
-def sample_grading_curve(grading_curve, V, seed=6174, chunk=1000):
+def sample_grading_curve(grading_curve, V, seed=6174, chunk=500):
     """
     Samples the radius distribution for a given grading curve consisting
     of N grading classes.
@@ -94,7 +98,7 @@ def sample_grading_curve(grading_curve, V, seed=6174, chunk=1000):
 
         V_deviation = sphere_volume(new_radii) - V_expected
 
-        radii += new_radii
+        radii = np.append(radii, new_radii)
 
     return radii
 
