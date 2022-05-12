@@ -104,4 +104,5 @@ public:
 };
 
 //! RSA algorithm implemented in RandomSequentialAddition.cpp
-std::pair<Eigen::MatrixX4d, Eigen::VectorXi> RSA(Eigen::VectorXd radii, const Box& box, int seed, int maxTries);
+std::pair<Eigen::MatrixX4d, Eigen::VectorXi> RSA(Eigen::VectorXd radii, const Box& box, int seed, int maxTries,
+                                                 bool progress);

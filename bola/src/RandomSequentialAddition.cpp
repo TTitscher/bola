@@ -43,7 +43,6 @@ struct Cells : public SubBox3d
         int n = OptimalNGrids(spheres(i, 3));
         if (n != ngrids)
         {
-            std::cout << "[RSA] Resize cells to n = " << n << "\n";
             Resize(n);
             for (int j = 0; j < i; ++j)
                 AddSphere(spheres.row(j), j);
@@ -68,7 +67,8 @@ struct Cells : public SubBox3d
 };
 
 
-std::pair<Eigen::MatrixX4d, Eigen::VectorXi> RSA(Eigen::VectorXd radii, const Box& box, int seed, int maxTries)
+std::pair<Eigen::MatrixX4d, Eigen::VectorXi> RSA(Eigen::VectorXd radii, const Box& box, int seed, int maxTries,
+                                                 bool progress)
 {
     std::mt19937 rng(seed);
     Cells cells(box.l.maxCoeff());
@@ -95,6 +95,23 @@ std::pair<Eigen::MatrixX4d, Eigen::VectorXi> RSA(Eigen::VectorXd radii, const Bo
 
         } while (cells.Overlaps(spheres, i));
         cells.AddSphere(spheres.row(i), i);
+
+        const int barWidth = 60;
+        if (progress and i % int(N / 100.) == 0)
+        {
+            int pos = i / (N / barWidth);
+            for (int j = 0; j < barWidth; ++j)
+            {
+                if (j < pos)
+                    std::cout << "#";
+                else if (j == pos)
+                    std::cout << ">";
+                else
+                    std::cout << " ";
+            }
+            std::cout << "| " << int(100. * i / N) << " %\r";
+            std::cout.flush();
+        }
     }
     return {spheres, tries};
 }
