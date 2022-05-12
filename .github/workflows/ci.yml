@@ -16,18 +16,26 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: 3.9
+    - name: Install eigen
+      run: |
+        wget https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz 
+        tar xzf eigen-3.4.0.tar.gz
+
     - name: Install dependencies
       run: |
-        sudo apt install libeigen3-dev
         python -m pip install --upgrade pip
         python -m pip install pybind11
+
+    - name: Install package
+      run: |
+        export BOLA_EIGEN_DIR=./eigen-3.4.0/
         pip install .[test]
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 --count --select=E9,F63,F7,F82 --show-source --statistics bola
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        flake8 --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics bola
     - name: Test with pytest
       run: |
         pytest
