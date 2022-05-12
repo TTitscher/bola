@@ -1,11 +1,34 @@
 import setuptools
 import site
+from setuptools import Extension
+import os
 import sys
+from pathlib import Path
+from pybind11.setup_helpers import Pybind11Extension, build_ext
 
 # https://github.com/googlefonts/fontmake/commit/164b24fd57c062297bf68b21c8ae88bc676f090b
 site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
 __version__ = "0.1"
+
+
+EIGEN_INCLUDE_DIR = os.environ.get("BOLA_EIGEN_DIR", "/usr/include/eigen3")
+
+source_dir = Path(__file__).parent / "bola" / "src"
+
+ext_modules = [
+    Pybind11Extension(
+        "bola._cpp",
+        sources = [str(source) for source in source_dir.glob("*.cpp")],
+        # Example: passing in the version to the compiled code
+        # define_macros=[("VERSION_INFO", __version__)],
+        extra_compile_args=["-g"],
+        language = "c++",
+        # extra_link_args=["-lgomp"],
+        include_dirs=[EIGEN_INCLUDE_DIR],
+    ),
+]
+
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
@@ -19,6 +42,8 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="",
+    ext_modules=ext_modules,
+    cmdclass={"build_ext": build_ext},
     zip_safe=False,
     packages=setuptools.find_packages(),
     classifiers=[

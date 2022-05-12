@@ -4,3 +4,5 @@ bola.egg-info
 *.h5
 *.xdmf
 *.msh
+*.so
+*build*

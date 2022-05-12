@@ -1,5 +1,6 @@
 import bola.psd
-from bola.rsa import rsa
+from bola.packing import rsa
+import numpy as np
 
 def test_grading():
     L = 50.
@@ -7,7 +8,7 @@ def test_grading():
 
     gc = bola.psd.GradingCurves.fuller()
     radii = bola.psd.sample_grading_curve(gc, L**3 * phi)
-    spheres, ntries = rsa(radii, L)
+    spheres = rsa(radii, (L, L, L))
 
     assert spheres is not None
     assert len(spheres) == len(radii)
