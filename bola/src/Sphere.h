@@ -30,7 +30,7 @@ public:
     double lutime = 0; // last update time
     Eigen::Vector3d x; // position
     Eigen::Vector3d v; // velocity
-    double r; // Sphere radius
-    double gr; // Sphere growth rate
-    double m; // Sphere mass
+    double r = 0.; // Sphere radius
+    double gr = 0.; // Sphere growth rate
+    double m = 1.; // Sphere mass
 };

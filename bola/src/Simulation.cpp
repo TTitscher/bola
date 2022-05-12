@@ -26,8 +26,8 @@ Simulation::Simulation(std::vector<Sphere> spheres, const Box& b)
         };
         if (s[i].r <= 0)
             Error("Radius must be > 0, not ", s[i].r);
-        if (s[i].gr <= 0)
-            Error("Growth rate must be > 0, not ", s[i].gr);
+        if (s[i].gr < 0)
+            Error("Growth rate must be >) 0, not ", s[i].gr);
         if (s[i].m <= 0)
             Error("Mass must be > 0, not ", s[i].m);
 
