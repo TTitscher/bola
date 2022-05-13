@@ -8,15 +8,13 @@
 #include <cmath>
 #include <iostream>
 
-Simulation::Simulation(std::vector<Sphere> spheres, const Box& b)
+Simulation::Simulation(const Box& box, std::vector<Sphere> spheres)
     : N(spheres.size())
-    , b(b)
+    , box(box)
     , s(spheres)
     , nextevents(N)
-    , cells(b.l)
+    , cells(box.l)
     , h(nextevents)
-    , positions(N, 3)
-    , radii(N)
 {
 
     for (int i = 0; i < N; i++)
@@ -42,6 +40,31 @@ Simulation::Simulation(std::vector<Sphere> spheres, const Box& b)
     SetInitialEvents();
 }
 
+std::vector<Sphere> ToSphereVector(Eigen::MatrixX4d sphereMatrix, Eigen::MatrixX3d velocities,
+                                   Eigen::VectorXd growthRates, Eigen::VectorXd masses)
+{
+    const int N = sphereMatrix.rows();
+    std::vector<Sphere> spheres(N);
+    for (int i = 0; i < N; ++i)
+    {
+        auto& s = spheres[i];
+        s.id = i;
+        s.x = sphereMatrix.block<1, 3>(i, 0);
+        s.r = sphereMatrix(i, 3);
+        s.v = velocities.row(i);
+        s.gr = growthRates[i];
+        s.m = masses[i];
+    }
+    return spheres;
+}
+
+Simulation::Simulation(const Box& box, Eigen::MatrixX4d sphereMatrix, Eigen::MatrixX3d velocities,
+                       Eigen::VectorXd growthRates, Eigen::VectorXd masses)
+    : Simulation(box, ToSphereVector(sphereMatrix, velocities, growthRates, masses))
+{
+}
+
+
 void Simulation::AssignCells()
 {
     for (int i = 0; i < N; i++)
@@ -50,7 +73,7 @@ void Simulation::AssignCells()
 
 Event Simulation::PredictSphereVsWall(int i)
 {
-    return std::min(b.PredictCollision(s[i]), cells.PredictTransfer(s[i]));
+    return std::min(box.PredictCollision(s[i]), cells.PredictTransfer(s[i]));
 }
 
 void Simulation::SetInitialEvents()
@@ -172,7 +195,7 @@ void Simulation::ProcessSphereVsWall(Event e)
     if (e.type == Event::Type::TRANSFER)
         cells.PerformTransfer(s[e.i], e.j);
     else
-        b.PerformCollision(s[e.i], e.j);
+        box.PerformCollision(s[e.i], e.j);
 }
 
 void Simulation::OutputEvents()
@@ -181,13 +204,15 @@ void Simulation::OutputEvents()
     h.print();
 }
 
-void Simulation::UpdateSpheres()
+Eigen::MatrixX4d Simulation::Spheres()
 {
+    Eigen::MatrixX4d spheres(N, 4);
     for (int i = 0; i < N; i++)
     {
-        positions.row(i) = s[i].x + s[i].v * (gtime - s[i].lutime);
-        radii[i] = s[i].R(gtime);
+        spheres.block<1, 3>(i, 0) = s[i].x + s[i].v * (gtime - s[i].lutime);
+        spheres(i, 3) = s[i].R(gtime);
     }
+    return spheres;
 }
 
 double Simulation::Energy()
@@ -206,12 +231,12 @@ double Simulation::PackingFraction()
         rfactor += std::pow(si.R(gtime), 3);
 
     double v = rfactor * 4. / 3. * M_PI;
-    return v / b.Volume();
+    return v / box.Volume();
 }
 
-void Simulation::ChangeNgrids(int newngrids)
+void Simulation::ChangeNgrids(int newNGrids)
 {
-    cells.Resize(newngrids);
+    cells.Resize(newNGrids);
     AssignCells();
     for (int i = 0; i < N; i++)
         nextevents[i] = Event(0., i, Event::Type::NONE);

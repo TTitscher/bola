@@ -43,7 +43,10 @@ class Simulation
 {
 public:
     // constructor and destructor
-    Simulation(std::vector<Sphere> spheres, const Box& b);
+    Simulation(const Box& box, std::vector<Sphere> spheres);
+
+    Simulation(const Box& box, Eigen::MatrixX4d sphereMatrix, Eigen::MatrixX3d velocities, Eigen::VectorXd growthRates,
+               Eigen::VectorXd masses);
 
     // Creating configurations
     void SetInitialEvents();
@@ -62,10 +65,10 @@ public:
     void ProcessSphereVsSphere(Event e);
     void ProcessSphereVsWall(Event e);
     void Synchronize(bool rescale);
-    void ChangeNgrids(int newngrids);
+    void ChangeNgrids(int newNGrids);
 
     // Debugging
-    void UpdateSpheres();
+    Eigen::MatrixX4d Spheres();
     void OutputEvents();
     void GetInfo();
 
@@ -80,7 +83,7 @@ public:
     }
 
     const int N; // number of spheres
-    const Box& b;
+    const Box& box;
 
     int ngrids; // number of cells in one direction
     double gtime = 0; // this is global clock
@@ -98,9 +101,6 @@ public:
 
     bool showResize = false;
     bool showEvents = false;
-
-    Eigen::MatrixXd positions;
-    Eigen::VectorXd radii;
 };
 
 //! RSA algorithm implemented in RandomSequentialAddition.cpp

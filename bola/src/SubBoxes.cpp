@@ -74,6 +74,9 @@ Event SubBoxes::PredictTransfer(const Sphere& s) const
 
 Event SubBoxes::PredictOutgrow(const Sphere& s) const
 {
+    if (s.gr == 0.)
+        return Event::NoEvent(s.id);
+
     double outgrowtime = (.5 * l / ngrids - s.R(s.lutime)) / s.gr + s.lutime;
     return Event(outgrowtime, s.id, Event::Type::RESIZE_GRID);
 }

@@ -1,5 +1,6 @@
 from . import _cpp
 import numpy as np
+import math
 
 
 def rsa(
@@ -22,29 +23,61 @@ def rsa(
     else:
         return spheres
 
-def sphere_vector(spheres):
-    v = []
-    for sphere in spheres:
-        s = _cpp.Sphere()
-        s.x = sphere[:3]
-        s.r = sphere[3]
-        v.append(s)
-    return v
+def maxwell_boltzmann_velocities(num, temperature=273.15, seed=6174):
+    mb = _cpp.MaxwellBoltzmann(6174)
+    vs = np.empty((num, 3))
+    for v in vs:
+        v = mb(temperature)
+    return vs
+
+def edmd(box, spheres, velocity=None, growth_rate=0.1, mass=1.):
+    N = len(spheres)
+    if velocity is None:
+        velocity = maxwell_boltzmann_velocities(N)
+    else:
+        assert velocity.shape == (N, 3)
+
+    if isinstance(growth_rate, float):
+        growth_rate = np.full(N, growth_rate)
+    else:
+        assert len(growth_rate) == N
+
+    if isinstance(mass, float):
+        mass = np.full(N, mass)
+    else:
+        assert len(mass) == N
+
+    sim = _cpp.Simulation(box, spheres, velocity, growth_rate, mass)
+    return sim
+
+def stats_string(sim):
+
+    def human_format(number):
+        """
+        thanks to https://stackoverflow.com/a/45478574
+        """
+        units = ['', 'K', 'M', 'G', 'T', 'P']
+        k = 1000.0
+        magnitude = int(math.floor(math.log(number, k)))
+        return '{:5.2f}{}'.format(number / k**magnitude, units[magnitude])
+
+    info = "{:.4%} | ".format(sim.stats.pf)
+    info += human_format(sim.stats.n_events) + " events | "
+    info += "{:.2E} | ".format(sim.stats.collisionrate)
+    info += "{:5.3f}s ".format(sim.t())
+    return info
 
 def show(spheres, box):
     from . import visu
-    N = len(spheres) 
 
-    v = visu.SphereVisualizer(N)
-    v.add_box(*box.l)
+    try:
+        l = box.l
+    except AttributeError:
+        l = box
 
-    x = np.empty((N, 3))
-    r = np.empty(N)
+    v = visu.SphereVisualizer(len(spheres))
+    v.add_box(*l)
 
-    for i in range(N):
-        x[i] = spheres[i].x
-        r[i] = spheres[i].r
-
-    v.update_data(x, r)
+    v.update_data(spheres[:, :3], spheres[:, 3])
     v.show()
 

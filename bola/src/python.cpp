@@ -61,16 +61,15 @@ PYBIND11_MODULE(_cpp, m)
     stats.def_readonly("collisionrate", &Stats::collisionrate);
 
     py::class_<Simulation> simulation(m, "Simulation");
-    simulation.def(py::init<std::vector<Sphere>, const Box&>());
+    simulation.def(py::init<const Box&, std::vector<Sphere>>());
+    simulation.def(py::init<const Box&, Eigen::MatrixX4d, Eigen::MatrixX3d, Eigen::VectorXd, Eigen::VectorXd>());
     simulation.def("process", &Simulation::Process);
     simulation.def("process_event", &Simulation::ProcessEvent);
     simulation.def("synchronize", &Simulation::Synchronize);
-    simulation.def("update_spheres", &Simulation::UpdateSpheres);
+    simulation.def("spheres", &Simulation::Spheres);
     simulation.def("t", &Simulation::T);
 
     simulation.def_readonly("stats", &Simulation::stats);
-    simulation.def_readonly("positions", &Simulation::positions);
-    simulation.def_readonly("radii", &Simulation::radii);
 
     simulation.def_readwrite("show_resize", &Simulation::showResize);
     simulation.def_readwrite("show_events", &Simulation::showEvents);

@@ -1,5 +1,5 @@
 import bola.psd
-from bola.packing import rsa
+from bola.packing import rsa, show
 import numpy as np
 
 def main():
@@ -10,6 +10,8 @@ def main():
     radii = bola.psd.sample_grading_curve(gc, L**3 * phi)
     print(len(radii), flush=True)
     spheres = rsa(radii, (L, L, L))
+
+    show(spheres, (L, L, L))
 
 if __name__ == "__main__":
     main()

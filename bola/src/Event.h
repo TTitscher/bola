@@ -63,6 +63,7 @@ public:
         case Event::Type::NONE:
             return "NONE";
         }
+        return ""; // mimimi reaches end of non-void function
     }
 
     // variables

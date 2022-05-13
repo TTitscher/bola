@@ -78,7 +78,12 @@ class SphereVisualizer:
         self.renderer = renderer
         return render_window
 
-    def update_data(self, positions, ri):
+    def update_data(self, positions, ri=None):
+
+        if ri is None:
+            ri = positions[:, 3]
+            positions = positions[:, :3]
+
 
         vtk_p = numpy_support.numpy_to_vtk(positions)
         self.vtk_d = numpy_support.numpy_to_vtk(
@@ -104,8 +109,9 @@ class SphereVisualizer:
 
 
 class Animation:
-    def __init__(self, window):
+    def __init__(self, window, update, dt=0.02):
         self.window = window
+        self.update = update
         self.interactor = vtk.vtkRenderWindowInteractor()
         self.interactor.SetRenderWindow(self.window)
 
@@ -116,8 +122,9 @@ class Animation:
         self.interactor.AddObserver("TimerEvent", self.update_scene)
         self.interactor.CreateRepeatingTimer(20)
 
+
         self.t = 0
-        self.dt = 0.02
+        self.dt = dt
         self.timings = {"Update": 0.0, "Render": 0.0}
 
     def update_scene(self, *args):
@@ -132,26 +139,9 @@ class Animation:
         self.timings["Update"] += t_update - t_start
         self.timings["Render"] += t_render - t_update
 
-    def update(self, t):
-        raise RuntimeError("implement me!")
-
     def start(self):
         self.interactor.Start()
         self.interactor.GetRenderWindow().Finalize()
-
-
-class SphereAnimation(Animation):
-    def __init__(self, vvv, positions, radii):
-        self.vvv = vvv
-        self.positions = positions
-        self.radii = radii
-        super().__init__(self.vvv.window)
-
-    def update(self, t):
-        F = 0.1
-        self.vvv.update_data(
-            self.positions + F * np.sin(t), self.radii + 0.1 * F * (1 + np.cos(t))
-        )
 
 
 if __name__ == "__main__":
@@ -162,7 +152,13 @@ if __name__ == "__main__":
     x = np.random.random((N, 3))
     r = np.random.random(N) / 100
 
-    animation = SphereAnimation(v, x, r)
+    def update(t):
+        F = 0.1
+        v.update_data(
+            x + F * np.sin(t), r + 0.1 * F * (1 + np.cos(20*t))
+        )
+
+    animation = Animation(v.window, update)
     animation.start()
 
     print(animation.timings)

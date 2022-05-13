@@ -1,47 +1,38 @@
-import bola
-import bola.packing
 from bola._cpp import *
 import numpy as np
+import pytest
 
-def api():
+
+def test_sphere_collision():
+    s1 = Sphere()
+    s1.x = [0, 0, 0]
+    s1.v = [1, 1, 1]
+    s1.r = 1.0
+
+    s2 = Sphere()
+    s2.x = [5, 5, 5]
+    s2.v = [0, 0, 0]
+    s2.r = 0.42
+    s2.gr = 0.1
+
+    effective_distance = np.linalg.norm(s2.x - s1.x) - (s2.r + s1.r)
+    effective_velocity = np.linalg.norm(s1.v) + s2.gr
+
+    e = s1.predict_collision(s2)
+    assert e.t == pytest.approx(effective_distance / effective_velocity)
+
+
+def test_wall_collision():
+    s = Sphere()
+    s.x = [4, 5, 5]
+    s.v = [0.1, 0, 0]
+    s.r = 1.0
+    s.gr = 0.42
+
     box = Cube(10, 10, 10)
-    N = 1000
-    r = np.full(1000, 0.3)
 
-    spheres = bola.packing.sphere_vector(bola.packing.rsa(r, box.l))
-    for s in spheres:
-        s.gr = 0.
-        s.m = 1.
-        s.v = np.random.random(3)
+    effective_distance = 6 - s.r
+    effective_velocity = np.linalg.norm(s.v) + s.gr
 
-    sim = Simulation(spheres, box)
-    sim.process(10000)
-    print(sim.stats.n_collisions)
-    sim.process(10000)
-    print(sim.stats.n_collisions)
-
-
-
-def newtons_cradle():
-    box = Cube(10, 10, 10)
-
-    # 5 spheres in the middle
-    spheres = []
-    for i in range(5):
-        s = Sphere()
-        s.r = 0.5
-        s.x = [i + 3, 5, 5]
-        spheres.append(s)
-
-    spheres[0].x = [1, 5, 5]
-    spheres[0].v = [1, 0, 0]
-
-    bola.packing.show(spheres, box)
-
-    sim = Simulation(spheres, box, )
-
-    pass
-
-
-if __name__ == "__main__":
-    api()
+    e = box.predict_collision(s)
+    assert e.t == pytest.approx(effective_distance / effective_velocity)
