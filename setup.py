@@ -1,4 +1,5 @@
 import setuptools
+from glob import glob
 import site
 from setuptools import Extension
 import os
@@ -19,7 +20,7 @@ source_dir = Path(__file__).parent / "bola" / "src"
 ext_modules = [
     Pybind11Extension(
         "bola._cpp",
-        sources = [str(source) for source in source_dir.glob("*.cpp")],
+        sources = sorted(glob("bola/src/*.cpp")),
         # Example: passing in the version to the compiled code
         # define_macros=[("VERSION_INFO", __version__)],
         extra_compile_args=["-g"],

@@ -1,8 +1,11 @@
 import gmsh
+from pathlib import Path
+import numpy as np
 
 geo = gmsh.model.geo
 
-gmsh.initialize()
+
+from dataclasses import dataclass
 
 
 def rectangle(xs, xe, mesh_size=0.1):
@@ -113,14 +116,14 @@ def sphere(xc, r, mesh_size=0.1):
     c10 = geo.add_circle_arc(p3, p0, p5)
     c11 = geo.add_circle_arc(p5, p0, p6)
 
-    s0 = geo.add_plane_surface([geo.add_curve_loop([c4, c9, c3])])
-    s1 = geo.add_plane_surface([geo.add_curve_loop([c8, -c4, c0])])
-    s2 = geo.add_plane_surface([geo.add_curve_loop([c11, -c7, -c0])])
-    s3 = geo.add_plane_surface([geo.add_curve_loop([c7, -c3, c10])])
-    s4 = geo.add_plane_surface([geo.add_curve_loop([-c9, c5, c2])])
-    s5 = geo.add_plane_surface([geo.add_curve_loop([-c10, -c2, c6])])
-    s6 = geo.add_plane_surface([geo.add_curve_loop([-c1, -c6, -c11])])
-    s7 = geo.add_plane_surface([geo.add_curve_loop([-c5, -c8, c1])])
+    s0 = geo.add_surface_filling([geo.add_curve_loop([c4, c9, c3])])
+    s1 = geo.add_surface_filling([geo.add_curve_loop([c8, -c4, c0])])
+    s2 = geo.add_surface_filling([geo.add_curve_loop([c11, -c7, -c0])])
+    s3 = geo.add_surface_filling([geo.add_curve_loop([c7, -c3, c10])])
+    s4 = geo.add_surface_filling([geo.add_curve_loop([-c9, c5, c2])])
+    s5 = geo.add_surface_filling([geo.add_curve_loop([-c10, -c2, c6])])
+    s6 = geo.add_surface_filling([geo.add_curve_loop([-c1, -c6, -c11])])
+    s7 = geo.add_surface_filling([geo.add_curve_loop([-c5, -c8, c1])])
 
     loop = geo.add_surface_loop([s0, s1, s2, s3, s4, s5, s6, s7])
     volume = geo.add_volume([loop])
@@ -148,40 +151,126 @@ def in2D():
     gmsh.model.geo.add_physical_group(dim=2, tags=surfaces, name="aggregates")
 
 
-def in3D():
-    centers = [
-        (0.25, 0.25, 0.5),
-        (0.25, 0.75, 0.5),
-        (0.75, 0.75, 0.5),
-        (0.75, 0.25, 0.5),
+@dataclass
+class GmshOptions:
+    order: int = 2
+
+    interface_thickness: float = 0.0
+    mesh_size_matrix: float = 0.05
+    mesh_size_aggregates: float = 0.05
+
+    alg2D: int = 1
+    alg3D: int = 1
+    recombine_alg: int = 0
+    optimize: int = 2
+    smoothing: int = 2
+
+    phys_group_matrix = "Matrix"
+    phys_group_aggregates = "Aggregates"
+    phys_group_interfaces = "Interfaces"
+
+    zslice: None = None
+    zslice_rmin: float = None
+
+    out: str = "out.msh"
+
+    @property
+    def dim(self):
+        return 3 if self.zslice is None else 2
+
+    def apply(self):
+        gmsh.option.set_number("Mesh.ElementOrder", self.order)
+        gmsh.option.set_number("Mesh.RecombinationAlgorithm", self.recombine_alg)
+        gmsh.option.set_number("Mesh.Algorithm", self.alg2D)
+        gmsh.option.set_number("Mesh.Algorithm3D", self.alg3D)
+        gmsh.option.set_number("Mesh.Optimize", self.optimize)
+        gmsh.option.set_number("Mesh.Smoothing", self.smoothing)
+
+
+def _slice(spheres, z, rmin):
+    s = np.asarray(spheres)
+    # x and y stay when sliced, only the radius needs adaptation
+    circles = s[:, (0, 1, 3)]
+    
+    delta_z = np.abs(s[:,2] - z)
+    circles[:, 2] = np.sqrt(s[:, 3]**2 - delta_z**2)
+
+    valid_circles = circles[:, 2] > rmin
+    if not np.any(valid_circles):
+        raise RuntimeError(
+            f"The slice at z={z} contained no cirlces (above rmin={rmin})!"
+        )
+
+    return circles[valid_circles]
+
+def write_mesh(out):
+    out = Path(out)
+    outmsh = out.with_suffix(".msh")
+
+    gmsh.write(str(outmsh))
+
+    if out.suffix != ".msh":
+        # try to convert it using meshio
+        import meshio
+
+        mesh = meshio.read(outmsh)
+        mesh.write(out)
+
+
+def create_geo(box, spheres, opts=GmshOptions(), show=False):
+    try:
+        l = box.l
+    except AttributeError:
+        l = box
+    gmsh.initialize()
+
+    if opts.zslice is None:
+        matrix = cuboid((0, 0, 0), l, mesh_size=opts.mesh_size_matrix)
+
+        ls = [sphere(c[:3], c[3], mesh_size=opts.mesh_size_aggregates) for c in spheres]
+        loops, surfaces = zip(*ls)
+        matrix_volume = gmsh.model.geo.add_volume([matrix] + list(loops))
+
+    else:
+        assert 0 < opts.zslice < l[2]
+        circles = _slice(
+            spheres, opts.zslice, opts.zslice_rmin or opts.mesh_size_aggregates
+        )
+
+        matrix = rectangle((0, 0), (l[0], l[1]), mesh_size=opts.mesh_size_matrix)
+        ls = [circle(c[:2], c[2], mesh_size=opts.mesh_size_aggregates) for c in circles]
+        loops, surfaces = zip(*ls)
+        matrix_volume = gmsh.model.geo.add_plane_surface([matrix] + list(loops))
+
+    gmsh.model.geo.add_physical_group(
+        dim=opts.dim, tags=[matrix_volume], name=opts.phys_group_matrix
+    )
+    gmsh.model.geo.add_physical_group(
+        dim=opts.dim, tags=surfaces, name=opts.phys_group_aggregates
+    )
+
+    gmsh.model.geo.synchronize()
+    opts.apply()
+    gmsh.model.mesh.generate(opts.dim)
+
+    write_mesh(opts.out)
+
+
+    if show:
+        gmsh.fltk.run()
+
+    gmsh.finalize()
+
+if __name__ == "__main__":
+    spheres = [
+        (0.25, 0.25, 0.5, 0.2),
+        (0.25, 0.75, 0.5, 0.1),
+        (0.75, 0.75, 0.5, 0.2),
+        (0.75, 0.25, 0.5, 0.1),
     ]
-    r = 0.1
 
-    loops = []
-    surfaces = []
-
-    box = cuboid((0, 0, 0), (1, 1, 1))
-
-    for c in centers:
-        loop, surface = sphere(c, r)
-        loops.append(loop)
-        surfaces.append(surface)
-
-    matrix_volume = gmsh.model.geo.add_volume([box] + loops)
-
-    gmsh.model.geo.add_physical_group(dim=3, tags=[matrix_volume], name="matrix")
-    # gmsh.model.geo.add_physical_group(dim=3, tags=surfaces, name="aggregates")
+    box = (1, 1, 1)
+    create_geo(box, spheres, GmshOptions(out="stuff3d.xdmf"))
+    create_geo(box, spheres, GmshOptions(out="stuff2d.xdmf", zslice=0.35))
 
 
-in3D()
-
-gmsh.model.geo.synchronize()
-
-gmsh.option.set_number("Mesh.ElementOrder", 2)
-
-gmsh.model.mesh.generate(3)
-gmsh.write("out.msh")
-
-gmsh.fltk.run()
-
-gmsh.finalize()
