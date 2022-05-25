@@ -8,9 +8,9 @@ geo = gmsh.model.geo
 from dataclasses import dataclass
 
 
-def rectangle(xs, xe, mesh_size=0.1):
+def _rectangle(xs, xe, mesh_size=0.1):
     """
-    Rectangle from start point `xs` to end point `xe` with a
+    _rectangle from start point `xs` to end point `xe` with a
     given `mesh_size`.
     """
     ms = mesh_size
@@ -28,9 +28,9 @@ def rectangle(xs, xe, mesh_size=0.1):
     return loop
 
 
-def cuboid(xs, xe, mesh_size=0.1):
+def _cuboid(xs, xe, mesh_size=0.1):
     """
-    Cuboid from start point `xs` to end point `xe` with a
+    _cuboid from start point `xs` to end point `xe` with a
     given `mesh_size`.
     """
     ms = mesh_size
@@ -72,7 +72,7 @@ def cuboid(xs, xe, mesh_size=0.1):
     return geo.add_surface_loop([s0, s1, s2, s3, s4, s5])
 
 
-def circle(xc, r, mesh_size=0.1):
+def _circle(xc, r, mesh_size=0.1):
     """
     geo.add_circle_arc with center `xc`, radius `r` and a given `mesh_size`.
     """
@@ -90,9 +90,9 @@ def circle(xc, r, mesh_size=0.1):
     return loop, surface
 
 
-def sphere(xc, r, mesh_size=0.1):
+def _sphere(xc, r, mesh_size=0.1):
     """
-    Sphere with center `xc`, radius `r` and a given `mesh_size`.
+    _sphere with center `xc`, radius `r` and a given `mesh_size`.
     """
     ms = mesh_size
     p0 = geo.add_point(xc[0], xc[1], xc[2], ms)
@@ -129,27 +129,6 @@ def sphere(xc, r, mesh_size=0.1):
     volume = geo.add_volume([loop])
 
     return loop, volume
-
-
-def in2D():
-    centers = [(0.25, 0.25), (0.25, 0.75), (0.75, 0.75), (0.75, 0.25)]
-    r = 0.1
-
-    loops = []
-    surfaces = []
-
-    box = rectangle((0, 0), (1, 1))
-
-    for c in centers:
-        loop, surface = circle(c, r)
-        loops.append(loop)
-        surfaces.append(surface)
-
-    matrix_surface = gmsh.model.geo.add_plane_surface([box] + loops)
-
-    gmsh.model.geo.add_physical_group(dim=2, tags=[matrix_surface], name="matrix")
-    gmsh.model.geo.add_physical_group(dim=2, tags=surfaces, name="aggregates")
-
 
 @dataclass
 class GmshOptions:
@@ -191,9 +170,12 @@ def _slice(spheres, z, rmin):
     s = np.asarray(spheres)
     # x and y stay when sliced, only the radius needs adaptation
     circles = s[:, (0, 1, 3)]
+    circles[:, 2] = 0
     
     delta_z = np.abs(s[:,2] - z)
-    circles[:, 2] = np.sqrt(s[:, 3]**2 - delta_z**2)
+    new_r_squared = s[:, 3]**2 - delta_z**2
+    valid = new_r_squared > 0
+    circles[valid, 2] = np.sqrt(new_r_squared[valid])
 
     valid_circles = circles[:, 2] > rmin
     if not np.any(valid_circles):
@@ -203,7 +185,7 @@ def _slice(spheres, z, rmin):
 
     return circles[valid_circles]
 
-def write_mesh(out):
+def _write_mesh(out):
     out = Path(out)
     outmsh = out.with_suffix(".msh")
 
@@ -217,7 +199,7 @@ def write_mesh(out):
         mesh.write(out)
 
 
-def create_geo(box, spheres, opts=GmshOptions(), show=False):
+def create(box, spheres, opts=GmshOptions(), show=False):
     try:
         l = box.l
     except AttributeError:
@@ -225,9 +207,9 @@ def create_geo(box, spheres, opts=GmshOptions(), show=False):
     gmsh.initialize()
 
     if opts.zslice is None:
-        matrix = cuboid((0, 0, 0), l, mesh_size=opts.mesh_size_matrix)
+        matrix = _cuboid((0, 0, 0), l, mesh_size=opts.mesh_size_matrix)
 
-        ls = [sphere(c[:3], c[3], mesh_size=opts.mesh_size_aggregates) for c in spheres]
+        ls = [_sphere(c[:3], c[3], mesh_size=opts.mesh_size_aggregates) for c in spheres]
         loops, surfaces = zip(*ls)
         matrix_volume = gmsh.model.geo.add_volume([matrix] + list(loops))
 
@@ -237,8 +219,8 @@ def create_geo(box, spheres, opts=GmshOptions(), show=False):
             spheres, opts.zslice, opts.zslice_rmin or opts.mesh_size_aggregates
         )
 
-        matrix = rectangle((0, 0), (l[0], l[1]), mesh_size=opts.mesh_size_matrix)
-        ls = [circle(c[:2], c[2], mesh_size=opts.mesh_size_aggregates) for c in circles]
+        matrix = _rectangle((0, 0), (l[0], l[1]), mesh_size=opts.mesh_size_matrix)
+        ls = [_circle(c[:2], c[2], mesh_size=opts.mesh_size_aggregates) for c in circles]
         loops, surfaces = zip(*ls)
         matrix_volume = gmsh.model.geo.add_plane_surface([matrix] + list(loops))
 
@@ -253,7 +235,7 @@ def create_geo(box, spheres, opts=GmshOptions(), show=False):
     opts.apply()
     gmsh.model.mesh.generate(opts.dim)
 
-    write_mesh(opts.out)
+    _write_mesh(opts.out)
 
 
     if show:
@@ -270,7 +252,7 @@ if __name__ == "__main__":
     ]
 
     box = (1, 1, 1)
-    create_geo(box, spheres, GmshOptions(out="stuff3d.xdmf"))
-    create_geo(box, spheres, GmshOptions(out="stuff2d.xdmf", zslice=0.35))
+    create(box, spheres, GmshOptions(out="stuff3d.xdmf"))
+    create(box, spheres, GmshOptions(out="stuff2d.xdmf", zslice=0.35))
 
 

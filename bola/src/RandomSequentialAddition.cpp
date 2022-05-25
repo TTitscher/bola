@@ -97,9 +97,9 @@ std::pair<Eigen::MatrixX4d, Eigen::VectorXi> RSA(Eigen::VectorXd radii, const Bo
         cells.AddSphere(spheres.row(i), i);
 
         const int barWidth = 60;
-        if (progress and i % int(N / 100.) == 0)
+        if (progress)
         {
-            int pos = i / (N / barWidth);
+            int pos = i * barWidth / N;
             for (int j = 0; j < barWidth; ++j)
             {
                 if (j < pos)

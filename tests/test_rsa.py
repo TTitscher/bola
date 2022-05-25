@@ -13,3 +13,5 @@ def test_grading():
     assert spheres is not None
     assert len(spheres) == len(radii)
 
+if __name__ == "__main__":
+    test_grading()

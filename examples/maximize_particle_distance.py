@@ -7,7 +7,7 @@ import numpy as np
 def main():
     grading = bola.psd.n_largest(bola.psd.GradingCurves.B16, 3)
     
-    L = grading[-1][0] * 5
+    L = grading[-1][0] * 2
     
     box = Cube(L, L, L)
     phi = 0.6
