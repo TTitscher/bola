@@ -23,7 +23,7 @@ ext_modules = [
         sources = sorted(glob("bola/src/*.cpp")),
         # Example: passing in the version to the compiled code
         # define_macros=[("VERSION_INFO", __version__)],
-        extra_compile_args=["-g"],
+        extra_compile_args=["-O3"],
         language = "c++",
         # extra_link_args=["-lgomp"],
         include_dirs=[EIGEN_INCLUDE_DIR],
@@ -52,7 +52,7 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["tabulate", "numpy", "loguru", "vtk", "tqdm"],
+    install_requires=["tabulate", "numpy", "loguru", "vtk", "tqdm", "gmsh", "meshio"],
     extras_require={  # Optional
         "dev": ["black"],
         "test": ["pytest", "pytest-cov", "flake8"],

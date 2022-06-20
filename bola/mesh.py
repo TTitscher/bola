@@ -243,16 +243,3 @@ def create(box, spheres, opts=GmshOptions(), show=False):
 
     gmsh.finalize()
 
-if __name__ == "__main__":
-    spheres = [
-        (0.25, 0.25, 0.5, 0.2),
-        (0.25, 0.75, 0.5, 0.1),
-        (0.75, 0.75, 0.5, 0.2),
-        (0.75, 0.25, 0.5, 0.1),
-    ]
-
-    box = (1, 1, 1)
-    create(box, spheres, GmshOptions(out="stuff3d.xdmf"))
-    create(box, spheres, GmshOptions(out="stuff2d.xdmf", zslice=0.35))
-
-

@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 
-def test_sphere_collision():
+def test_cpp_sphere_collision():
     s1 = Sphere()
     s1.x = [0, 0, 0]
     s1.v = [1, 1, 1]
@@ -22,7 +22,7 @@ def test_sphere_collision():
     assert e.t == pytest.approx(effective_distance / effective_velocity)
 
 
-def test_wall_collision():
+def test_cpp_wall_collision():
     s = Sphere()
     s.x = [4, 5, 5]
     s.v = [0.1, 0, 0]
