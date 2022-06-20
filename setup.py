@@ -10,7 +10,7 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 # https://github.com/googlefonts/fontmake/commit/164b24fd57c062297bf68b21c8ae88bc676f090b
 site.ENABLE_USER_SITE = "--user" in sys.argv[1:]
 
-__version__ = "0.1"
+__version__ = "0.1.1"
 
 
 EIGEN_INCLUDE_DIR = os.environ.get("BOLA_EIGEN_DIR", "/usr/include/eigen3")
@@ -39,14 +39,15 @@ setuptools.setup(
     version=__version__,
     author="Thomas Titscher",
     author_email="thomas.titscher@gmail.com",
-    description="Sphere stuff",
+    description="Collection of sphere packing and meshing algorithms.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="",
+    url="https://github.com/TTitscher/bola",
     ext_modules=ext_modules,
     cmdclass={"build_ext": build_ext},
     zip_safe=False,
     packages=setuptools.find_packages(),
+    keywords="molecular-dynamics packing-algorithm gmsh fba edmd",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
