@@ -17,13 +17,13 @@ for i in range(4):
     ax.add_patch(plt.Circle((i * w, 0), r, color="w", lw=0))
 
 # ---- b ----
-ax.add_patch(plt.Rectangle((-2, 0), 2-r, 4, color=c, lw=0))
+ax.add_patch(plt.Rectangle((-2, 0), 2 - r, 4, color=c, lw=0))
 # ---- o ----
 # ---- l ----
-ax.add_patch(plt.Rectangle((2 * w - 2, 0), 4 , 4, color="w", lw=0))
-ax.add_patch(plt.Rectangle((2 * w - 2, -0.05), 2-r, 4, color=c, lw=0))
+ax.add_patch(plt.Rectangle((2 * w - 2, 0), 4, 4, color="w", lw=0))
+ax.add_patch(plt.Rectangle((2 * w - 2, -0.05), 2 - r, 4, color=c, lw=0))
 # ---- a ----
-ax.add_patch(plt.Rectangle((3 * w + r, 0), 2-r, -2, color=c, lw=0))
+ax.add_patch(plt.Rectangle((3 * w + r, 0), 2 - r, -2, color=c, lw=0))
 
 fig.savefig("bola.svg", bbox_inches="tight")
 plt.show()

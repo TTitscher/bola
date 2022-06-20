@@ -3,6 +3,7 @@ from bola import psd
 import matplotlib
 import matplotlib.pyplot as plt
 
+
 def main():
 
     N_classes = 5
@@ -16,8 +17,7 @@ def main():
     ]
     gcs = [psd.n_largest(gc, N_classes) for gc in gcs]
 
-
-    fig, axes = plt.subplots(2, 2, figsize=(10,8), constrained_layout=True)
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8), constrained_layout=True)
     factors = (2, 3, 5, 10)
 
     for ax, factor in zip(axes.flat, factors):
@@ -25,18 +25,17 @@ def main():
         ax.set_xlabel("particle diameter")
         ax.set_ylabel("particle mass CDF")
 
-        V_box = (factor * d_max)**3 
-      
-        for gc in gcs: 
+        V_box = (factor * d_max) ** 3
+
+        for gc in gcs:
             radii = psd.sample_grading_curve(gc, V_box)
             d, v = zip(*gc)
             ax.semilogx(d, v, ":kx", label="target")
             ax.semilogx(*psd.build_grading_curve(radii, V_box), "-r", label="sampled")
-        
+
         ax.set_xticks(d)
         ax.xaxis.set_major_formatter(matplotlib.ticker.StrMethodFormatter("{x:,g}"))
 
-        
     plt.show()
 
 

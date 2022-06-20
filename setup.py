@@ -20,11 +20,11 @@ source_dir = Path(__file__).parent / "bola" / "src"
 ext_modules = [
     Pybind11Extension(
         "bola._cpp",
-        sources = sorted(glob("bola/src/*.cpp")),
+        sources=sorted(glob("bola/src/*.cpp")),
         # Example: passing in the version to the compiled code
         # define_macros=[("VERSION_INFO", __version__)],
         extra_compile_args=["-O3"],
-        language = "c++",
+        language="c++",
         # extra_link_args=["-lgomp"],
         include_dirs=[EIGEN_INCLUDE_DIR],
     ),
@@ -52,9 +52,9 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=["tabulate", "numpy", "loguru", "vtk", "tqdm", "gmsh", "meshio"],
+    install_requires=["tabulate", "numpy", "loguru", "vtk", "tqdm", "gmsh"],
     extras_require={  # Optional
         "dev": ["black"],
-        "test": ["pytest", "pytest-cov", "flake8"],
+        "test": ["pytest", "pytest-cov", "flake8", "h5py", "meshio"],
     },
 )

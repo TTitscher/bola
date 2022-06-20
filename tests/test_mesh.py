@@ -1,7 +1,7 @@
 from bola.mesh import create, GmshOptions
 from tempfile import TemporaryDirectory
 from pathlib import Path
-   
+
 
 def run(filename, zslice=None):
     spheres = [
@@ -19,8 +19,10 @@ def run(filename, zslice=None):
 
         assert p.exists()
 
+
 def test_2d_msh():
     run("stuff2d.msh")
+
 
 def test_3d_xdmf():
     run("stuff3d.xdmf", zslice=0.35)

@@ -130,6 +130,7 @@ def _sphere(xc, r, mesh_size=0.1):
 
     return loop, volume
 
+
 @dataclass
 class GmshOptions:
     order: int = 2
@@ -171,9 +172,9 @@ def _slice(spheres, z, rmin):
     # x and y stay when sliced, only the radius needs adaptation
     circles = s[:, (0, 1, 3)]
     circles[:, 2] = 0
-    
-    delta_z = np.abs(s[:,2] - z)
-    new_r_squared = s[:, 3]**2 - delta_z**2
+
+    delta_z = np.abs(s[:, 2] - z)
+    new_r_squared = s[:, 3] ** 2 - delta_z ** 2
     valid = new_r_squared > 0
     circles[valid, 2] = np.sqrt(new_r_squared[valid])
 
@@ -184,6 +185,7 @@ def _slice(spheres, z, rmin):
         )
 
     return circles[valid_circles]
+
 
 def _write_mesh(out):
     out = Path(out)
@@ -209,7 +211,9 @@ def create(box, spheres, opts=GmshOptions(), show=False):
     if opts.zslice is None:
         matrix = _cuboid((0, 0, 0), l, mesh_size=opts.mesh_size_matrix)
 
-        ls = [_sphere(c[:3], c[3], mesh_size=opts.mesh_size_aggregates) for c in spheres]
+        ls = [
+            _sphere(c[:3], c[3], mesh_size=opts.mesh_size_aggregates) for c in spheres
+        ]
         loops, surfaces = zip(*ls)
         matrix_volume = gmsh.model.geo.add_volume([matrix] + list(loops))
 
@@ -220,7 +224,9 @@ def create(box, spheres, opts=GmshOptions(), show=False):
         )
 
         matrix = _rectangle((0, 0), (l[0], l[1]), mesh_size=opts.mesh_size_matrix)
-        ls = [_circle(c[:2], c[2], mesh_size=opts.mesh_size_aggregates) for c in circles]
+        ls = [
+            _circle(c[:2], c[2], mesh_size=opts.mesh_size_aggregates) for c in circles
+        ]
         loops, surfaces = zip(*ls)
         matrix_volume = gmsh.model.geo.add_plane_surface([matrix] + list(loops))
 
@@ -237,9 +243,7 @@ def create(box, spheres, opts=GmshOptions(), show=False):
 
     _write_mesh(opts.out)
 
-
     if show:
         gmsh.fltk.run()
 
     gmsh.finalize()
-

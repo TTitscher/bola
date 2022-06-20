@@ -84,7 +84,6 @@ class SphereVisualizer:
             ri = positions[:, 3]
             positions = positions[:, :3]
 
-
         vtk_p = numpy_support.numpy_to_vtk(positions)
         self.vtk_d = numpy_support.numpy_to_vtk(
             2 * np.asarray(ri)
@@ -122,7 +121,6 @@ class Animation:
         self.interactor.AddObserver("TimerEvent", self.update_scene)
         self.interactor.CreateRepeatingTimer(20)
 
-
         self.t = 0
         self.dt = dt
         self.timings = {"Update": 0.0, "Render": 0.0}
@@ -154,9 +152,7 @@ if __name__ == "__main__":
 
     def update(t):
         F = 0.1
-        v.update_data(
-            x + F * np.sin(t), r + 0.1 * F * (1 + np.cos(20*t))
-        )
+        v.update_data(x + F * np.sin(t), r + 0.1 * F * (1 + np.cos(20 * t)))
 
     animation = Animation(v.window, update)
     animation.start()
