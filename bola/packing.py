@@ -26,7 +26,7 @@ def rsa(
         size before adding them.
 
     l : array_like, shape (3,)
-        Box dimensions. The box then goes from (0,0,0) to *l,
+        Box dimensions. The box then goes from (0,0,0) to ``*l``,
         thus, (l[0], l[1], l[2]).
 
     n_tries : int
@@ -75,6 +75,7 @@ def rsa(
     >>> spheres = rsa(radii, (L, L, L))
 
     With vtk installed, you can have a look at the resulting packing
+
     >>> show(spheres, (L, L, L))
 
     """
@@ -113,6 +114,7 @@ def maxwell_boltzmann_velocities(n, temperature=273.15, seed=6174):
     vs : ndarray, shape (n,3)
         Matrix of velocities where each of the ``n`` rows corresponds to the
         velocity components (v_x, v_y, v_z).
+
     """
 
     mb = _cpp.MaxwellBoltzmann(6174)
@@ -129,23 +131,24 @@ def edmd(box, spheres, velocity=None, growth_rate=0.1, mass=1.0):
 
     All spheres move according to free-flight dynamics and grow over time.
     EDMD subsequently predicts and performs the next (closest in time)
-    collision with another sphere or the box. See [1]_, [2]_ and especially
-    [3]_ for details.
+    collision with another sphere or the box. See [3]_, [4]_ and especially
+    [5]_ for details.
 
     References
     ----------
-    .. [1] Lubachevsky, B.D. and Stillinger, F.H., 1990.
+    .. [3] Lubachevsky, B.D. and Stillinger, F.H., 1990.
            Geometric properties of random disk packings.
            Journal of statistical Physics, 60(5), pp.561-583.
 
-    .. [2] Donev, A., Torquato, S., Stillinger, F.H. and Connelly, R., 2004.
+    .. [4] Donev, A., Torquato, S., Stillinger, F.H. and Connelly, R., 2004.
            Jamming in hard sphere and disk packings.
            Journal of applied physics, 95(3), pp.989-999.
 
-    .. [3] Titscher, T. and Unger, J.F., 2015.
+    .. [5] Titscher, T. and Unger, J.F., 2015.
            Application of molecular dynamics simulations for the generation
            of dense concrete mesoscale geometries.
            Computers & Structures, 158, pp.274-284.
+
     """
     N = len(spheres)
     if velocity is None:
