@@ -1,5 +1,6 @@
-import bola.psd
-from bola.packing import rsa, show
+from bola.psd import GradingCurves, sample_grading_curve
+from bola.packing import rsa
+from bola.visu import show
 import numpy as np
 
 
@@ -7,9 +8,8 @@ def polydisperse():
     L = 50.0
     phi = 0.6
 
-    gc = bola.psd.GradingCurves.fuller(d_min=0.5)
-    radii = bola.psd.sample_grading_curve(gc, L ** 3 * phi)
-    print(len(radii), flush=True)
+    gc = GradingCurves.fuller(d_min=0.5)
+    radii = sample_grading_curve(gc, L ** 3 * phi)
     spheres = rsa(radii, (L, L, L))
 
     show(spheres, (L, L, L))

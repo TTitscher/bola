@@ -1,4 +1,5 @@
 from bola._cpp import *
+from bola import packing as bp
 import numpy as np
 import pytest
 
@@ -36,3 +37,20 @@ def test_cpp_wall_collision():
 
     e = box.predict_collision(s)
     assert e.t == pytest.approx(effective_distance / effective_velocity)
+
+
+def test_run():
+    radii = np.linspace(1, 2, 10)
+    box = (8, 8, 8)
+    spheres = bp.rsa(radii, box)
+
+    gr = 0.1
+    sim = bp.edmd(box, spheres, growth_rate=gr)
+    while sim.t() < 0.42:
+        sim.process(1000)
+        sim.synchronize(True)
+
+    new_spheres = sim.spheres()
+    new_spheres[:,3] = spheres[:, 3]
+
+    assert bp.min_distance(new_spheres) > 2 * 0.42 * gr

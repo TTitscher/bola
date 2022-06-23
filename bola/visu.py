@@ -1,3 +1,4 @@
+import os
 import vtk
 from vtk.util import numpy_support
 import numpy as np
@@ -43,21 +44,40 @@ class SphereVisualizer:
         grid.SetPoints(self.positions)
         grid.GetPointData().AddArray(self.diameters)
         grid.GetPointData().SetActiveScalars("diameter")
-        # poly_data.GetPointData().AddArray(self.radii)
 
-        sphere_source = self._reference_sphere()
+        sphere_source = self._reference_sphere(resolution=20)
         glyph = vtk.vtkGlyph3D()
         glyph.GeneratePointIdsOn()
         glyph.SetInputData(grid)
         glyph.SetSourceConnection(sphere_source.GetOutputPort())
+        glyph.SetColorModeToColorByScalar()
+        glyph.ClampingOff()
         glyph.Update()
 
-        mapper = vtk.vtkPolyDataMapper()
-        mapper.SetInputConnection(glyph.GetOutputPort())
-        mapper.SetScalarModeToUsePointFieldData()
+        table = vtk.vtkLookupTable()
+        lutNum = 256
+        table.SetNumberOfTableValues(lutNum)
+        color_transfer = vtk.vtkColorTransferFunction()
+        color_transfer.SetColorSpaceToDiverging()
+
+        def to_rgb(h):
+            return [int(h[i : i + 2], 16) / 255 for i in (0, 2, 4)]
+
+        color_transfer.AddRGBPoint(0.0, *to_rgb("426174"))
+        color_transfer.AddRGBPoint(1.0, *to_rgb("FEED42"))
+        for ii, ss in enumerate([float(xx) / float(lutNum) for xx in range(lutNum)]):
+            cc = color_transfer.GetColor(ss)
+            table.SetTableValue(ii, *cc, 1.0)
+
+        self.mapper = vtk.vtkPolyDataMapper()
+        self.mapper.SetInputConnection(glyph.GetOutputPort())
+        self.mapper.SetLookupTable(table)
+        self.mapper.ScalarVisibilityOn()
+        self.mapper.SetScalarModeToUsePointData()
+        self.mapper.SelectColorArray("diameter")
 
         actor = vtk.vtkActor()
-        actor.SetMapper(mapper)
+        actor.SetMapper(self.mapper)
 
         # create a rendering window and renderer
         renderer = vtk.vtkRenderer()
@@ -78,7 +98,7 @@ class SphereVisualizer:
         self.renderer = renderer
         return render_window
 
-    def update_data(self, positions, ri=None):
+    def update_data(self, positions, ri=None, radius_range=None):
 
         if ri is None:
             ri = positions[:, 3]
@@ -88,6 +108,11 @@ class SphereVisualizer:
         self.vtk_d = numpy_support.numpy_to_vtk(
             2 * np.asarray(ri)
         )  # memory shenanigans
+
+        if radius_range is None:
+            radius_range = 2 * np.min(ri), 2 * np.max(ri)
+
+        self.mapper.SetScalarRange(*radius_range)
 
         self.positions.SetData(vtk_p)
         self.diameters.SetArray(self.vtk_d, self.N, 1)
@@ -105,6 +130,28 @@ class SphereVisualizer:
         interactor.Initialize()
         interactor.Start()
         interactor.GetRenderWindow().Finalize()
+
+    def set_camera(self, x_camera, x_focal):
+        new_camera = vtk.vtkCamera()
+        new_camera.SetPosition(x_camera)
+        new_camera.SetFocalPoint(x_focal)
+        new_camera.SetViewUp((0, 1, 0))
+        self.renderer.SetActiveCamera(new_camera)
+        self.window.Render()
+
+    def to_png(self, filename, magnification=1):
+        render_image = vtk.vtkRenderLargeImage()
+        image_writer = vtk.vtkJPEGWriter()
+        render_image.SetInput(self.renderer)
+        render_image.SetMagnification(magnification)
+        image_writer.SetInputConnection(render_image.GetOutputPort())
+        image_writer.SetFileName(str(filename))
+        image_writer.Write()
+
+        # I had a look at e.g. PIL and found nothing as convenient
+        # as unix `convert`. For windows compatibility, that needs
+        # to be adapted.
+        os.system(f"convert -trim {filename} {filename}")
 
 
 class Animation:
@@ -140,6 +187,64 @@ class Animation:
     def start(self):
         self.interactor.Start()
         self.interactor.GetRenderWindow().Finalize()
+
+
+def _arrange_radii(radii):
+    assert np.all(radii > 0.0)
+    r_sort = -np.sort(-radii)  # small hack to sort reversed
+
+    spheres = np.zeros((len(radii), 4))
+    spheres[:, 3] = r_sort
+
+    approx_area = np.sum((2 * radii) ** 2)
+    Lmax = approx_area ** 0.5
+
+    x = spheres[0, 3]
+    y = 0.0
+    y_row = None
+
+    N = len(spheres) - 1
+    for i in range(N):
+        spheres[i, :2] = x, y
+
+        if y_row is None:
+            y_row = spheres[i, 3]
+
+        x += spheres[i, 3] + spheres[i + 1, 3]
+
+        if x > Lmax:
+            x = spheres[i + 1, 3]
+            y -= y_row + spheres[i + 1, 3]
+            y_row = None
+
+    # place last sphere separately to
+    spheres[N, :2] = x, y
+    return spheres
+
+
+def show(spheres_or_radii, box=None, filename=None):
+    from . import visu
+
+    if spheres_or_radii.ndim == 1:
+        spheres = _arrange_radii(spheres_or_radii)
+    else:
+        spheres = spheres_or_radii
+
+    v = visu.SphereVisualizer(len(spheres_or_radii))
+
+    if box is not None:
+        try:
+            l = np.asarray(box.l)
+        except AttributeError:
+            l = np.asarray(box)
+        v.add_box(*l)
+        v.set_camera((2 * l[0], 2 * l[1], 3 * l[2]), l / 2)
+
+    v.update_data(spheres)
+    if filename is not None:
+        v.to_png(filename, magnification=3)
+    else:
+        v.show()
 
 
 if __name__ == "__main__":

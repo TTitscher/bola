@@ -8,12 +8,12 @@
 #include <cmath>
 #include <iostream>
 
-Simulation::Simulation(const Box& box, std::vector<Sphere> spheres)
+Simulation::Simulation(std::shared_ptr<Box> box, std::vector<Sphere> spheres)
     : N(spheres.size())
     , box(box)
     , s(spheres)
     , nextevents(N)
-    , cells(box.l)
+    , cells(box->l)
     , h(nextevents)
 {
 
@@ -58,7 +58,7 @@ std::vector<Sphere> ToSphereVector(Eigen::MatrixX4d sphereMatrix, Eigen::MatrixX
     return spheres;
 }
 
-Simulation::Simulation(const Box& box, Eigen::MatrixX4d sphereMatrix, Eigen::MatrixX3d velocities,
+Simulation::Simulation(std::shared_ptr<Box> box, Eigen::MatrixX4d sphereMatrix, Eigen::MatrixX3d velocities,
                        Eigen::VectorXd growthRates, Eigen::VectorXd masses)
     : Simulation(box, ToSphereVector(sphereMatrix, velocities, growthRates, masses))
 {
@@ -73,7 +73,7 @@ void Simulation::AssignCells()
 
 Event Simulation::PredictSphereVsWall(int i)
 {
-    return std::min(box.PredictCollision(s[i]), cells.PredictTransfer(s[i]));
+    return std::min(box->PredictCollision(s[i]), cells.PredictTransfer(s[i]));
 }
 
 void Simulation::SetInitialEvents()
@@ -195,7 +195,7 @@ void Simulation::ProcessSphereVsWall(Event e)
     if (e.type == Event::Type::TRANSFER)
         cells.PerformTransfer(s[e.i], e.j);
     else
-        box.PerformCollision(s[e.i], e.j);
+        box->PerformCollision(s[e.i], e.j);
 }
 
 void Simulation::OutputEvents()
@@ -231,7 +231,7 @@ double Simulation::PackingFraction()
         rfactor += std::pow(si.R(gtime), 3);
 
     double v = rfactor * 4. / 3. * M_PI;
-    return v / box.Volume();
+    return v / box->Volume();
 }
 
 void Simulation::ChangeNgrids(int newNGrids)
