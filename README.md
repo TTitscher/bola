@@ -4,6 +4,26 @@
 
 Collection of sphere packing and meshing algorithms.
 
+Particle size according to `bola.psd.GradingCurve` (sieve lines):
+<h1 align="center">
+<img src="https://raw.githubusercontent.com/TTitscher/bola/main/examples/gc.png" width="300">
+</h1><br>
+
+Initial packing using `bola.packing.rsa` (random sequential addition)
+<h1 align="center">
+<img src="https://raw.githubusercontent.com/TTitscher/bola/main/examples/rsa.png" width="300">
+</h1><br>
+
+Maximize particle distance using `bola.packing.edmd` (event-driven molecular-dynamics)
+<h1 align="center">
+<img src="https://raw.githubusercontent.com/TTitscher/bola/main/examples/edmd.png" width="300">
+</h1><br>
+
+Mesh via gmsh using `bola.mesh`
+<h1 align="center">
+<img src="https://raw.githubusercontent.com/TTitscher/bola/main/examples/mesh.png" width="300">
+</h1><br>
+
 # Installation
 
 ~~~sh

@@ -129,6 +129,9 @@ def edmd(box, spheres, velocity=None, growth_rate=0.1, mass=1.0):
     Event-driven molecular-dynamic (EDMD) simulation to grow (polydisperse)
     spheres in a box.
 
+    Creates/returns a `cpp.Simulation` object to directly access the cpp
+    interface.
+
     All spheres move according to free-flight dynamics and grow over time.
     EDMD subsequently predicts and performs the next (closest in time)
     collision with another sphere or the box. See [3]_, [4]_ and especially
@@ -191,60 +194,12 @@ def stats_string(sim):
     info += "{:5.3f}s ".format(sim.t())
     return info
 
-def _arrange_radii(radii):
-    assert np.all(radii > 0.0)
-    r_sort = -np.sort(-radii)  # small hack to sort reversed
 
-    spheres = np.zeros((len(radii), 4))
-    spheres[:, 3] = r_sort
-
-    approx_area = np.sum((2*radii)**2) 
-    Lmax = approx_area ** 0.5
-
-    x = spheres[0, 3]
-    y = 0.0
-    y_row = None
-
-    N = len(spheres) - 1
-    for i in range(N):
-        spheres[i, :2] = x, y
-
-        if y_row is None:
-            y_row = spheres[i, 3]
-
-        x += spheres[i, 3] + spheres[i + 1, 3]
-
-        if x > Lmax:
-            x = spheres[i + 1, 3]
-            y -= y_row + spheres[i + 1, 3]
-            y_row = None
-
-    # place last sphere separately to
-    spheres[N, :2] = x, y
-    return spheres
-
-def show(spheres_or_radii, box=None, filename=None):
-    from . import visu
-
-    if spheres_or_radii.ndim == 1:
-        spheres = _arrange_radii(spheres_or_radii)
-    else:
-        spheres  = spheres_or_radii
-
-
-    v = visu.SphereVisualizer(len(spheres_or_radii))
-   
-    if box is not None:
-        try:
-            l = np.asarray(box.l)
-        except AttributeError:
-            l = np.asarray(box)
-        v.add_box(*l)
-        v.set_camera((2*l[0], 2*l[1], 3*l[2]), l/2)
-
-
-    v.update_data(spheres)
-    if filename is not None:
-        v.to_png(filename, magnification=3)
-    else:
-        v.show()
+def min_distance(spheres):
+    min_d = np.inf
+    for i, sphere in enumerate(spheres):
+        dist = np.linalg.norm(spheres[:, :3] - sphere[:3], axis=1)
+        dist[i] = np.inf
+        radii = spheres[:, 3] + sphere[3]
+        min_d = min(min_d, np.min(dist - radii))
+    return min_d

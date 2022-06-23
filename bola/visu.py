@@ -61,7 +61,7 @@ class SphereVisualizer:
         color_transfer.SetColorSpaceToDiverging()
 
         def to_rgb(h):
-            return [int(h[i:i+2], 16)/255 for i in (0, 2, 4)]
+            return [int(h[i : i + 2], 16) / 255 for i in (0, 2, 4)]
 
         color_transfer.AddRGBPoint(0.0, *to_rgb("426174"))
         color_transfer.AddRGBPoint(1.0, *to_rgb("FEED42"))
@@ -145,7 +145,7 @@ class SphereVisualizer:
         render_image.SetInput(self.renderer)
         render_image.SetMagnification(magnification)
         image_writer.SetInputConnection(render_image.GetOutputPort())
-        image_writer.SetFileName(filename)
+        image_writer.SetFileName(str(filename))
         image_writer.Write()
 
         # I had a look at e.g. PIL and found nothing as convenient
@@ -187,6 +187,64 @@ class Animation:
     def start(self):
         self.interactor.Start()
         self.interactor.GetRenderWindow().Finalize()
+
+
+def _arrange_radii(radii):
+    assert np.all(radii > 0.0)
+    r_sort = -np.sort(-radii)  # small hack to sort reversed
+
+    spheres = np.zeros((len(radii), 4))
+    spheres[:, 3] = r_sort
+
+    approx_area = np.sum((2 * radii) ** 2)
+    Lmax = approx_area ** 0.5
+
+    x = spheres[0, 3]
+    y = 0.0
+    y_row = None
+
+    N = len(spheres) - 1
+    for i in range(N):
+        spheres[i, :2] = x, y
+
+        if y_row is None:
+            y_row = spheres[i, 3]
+
+        x += spheres[i, 3] + spheres[i + 1, 3]
+
+        if x > Lmax:
+            x = spheres[i + 1, 3]
+            y -= y_row + spheres[i + 1, 3]
+            y_row = None
+
+    # place last sphere separately to
+    spheres[N, :2] = x, y
+    return spheres
+
+
+def show(spheres_or_radii, box=None, filename=None):
+    from . import visu
+
+    if spheres_or_radii.ndim == 1:
+        spheres = _arrange_radii(spheres_or_radii)
+    else:
+        spheres = spheres_or_radii
+
+    v = visu.SphereVisualizer(len(spheres_or_radii))
+
+    if box is not None:
+        try:
+            l = np.asarray(box.l)
+        except AttributeError:
+            l = np.asarray(box)
+        v.add_box(*l)
+        v.set_camera((2 * l[0], 2 * l[1], 3 * l[2]), l / 2)
+
+    v.update_data(spheres)
+    if filename is not None:
+        v.to_png(filename, magnification=3)
+    else:
+        v.show()
 
 
 if __name__ == "__main__":
