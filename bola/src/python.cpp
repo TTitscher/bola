@@ -27,12 +27,12 @@ PYBIND11_MODULE(_cpp, m)
             .value("None", Event::Type::NONE)
             .value("Resize", Event::Type::RESIZE_GRID);
 
-    py::class_<Box> box(m, "Box");
+    py::class_<Box, std::shared_ptr<Box>> box(m, "Box");
     box.def("predict_collision", &Box::PredictCollision);
     box.def("perform_collision", &Box::PerformCollision);
     box.def("volume", &Box::Volume);
 
-    py::class_<Cube, Box> cube(m, "Cube");
+    py::class_<Cube, std::shared_ptr<Cube>, Box> cube(m, "Cube");
     cube.def(py::init<double, double, double>());
     cube.def_readonly("l", &Cube::l);
 
@@ -61,8 +61,9 @@ PYBIND11_MODULE(_cpp, m)
     stats.def_readonly("collisionrate", &Stats::collisionrate);
 
     py::class_<Simulation> simulation(m, "Simulation");
-    simulation.def(py::init<const Box&, std::vector<Sphere>>());
-    simulation.def(py::init<const Box&, Eigen::MatrixX4d, Eigen::MatrixX3d, Eigen::VectorXd, Eigen::VectorXd>());
+    simulation.def(py::init<std::shared_ptr<Box>, std::vector<Sphere>>());
+    simulation.def(
+            py::init<std::shared_ptr<Box>, Eigen::MatrixX4d, Eigen::MatrixX3d, Eigen::VectorXd, Eigen::VectorXd>());
     simulation.def("process", &Simulation::Process);
     simulation.def("process_event", &Simulation::ProcessEvent);
     simulation.def("synchronize", &Simulation::Synchronize);

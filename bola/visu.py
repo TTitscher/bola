@@ -44,9 +44,8 @@ class SphereVisualizer:
         grid.SetPoints(self.positions)
         grid.GetPointData().AddArray(self.diameters)
         grid.GetPointData().SetActiveScalars("diameter")
-        # poly_data.GetPointData().AddArray(self.radii)
 
-        sphere_source = self._reference_sphere(resolution=50)
+        sphere_source = self._reference_sphere(resolution=20)
         glyph = vtk.vtkGlyph3D()
         glyph.GeneratePointIdsOn()
         glyph.SetInputData(grid)
@@ -63,11 +62,9 @@ class SphereVisualizer:
 
         def to_rgb(h):
             return [int(h[i:i+2], 16)/255 for i in (0, 2, 4)]
-        blue = to_rgb("426174")
-        print(blue)
 
         color_transfer.AddRGBPoint(0.0, *to_rgb("426174"))
-        color_transfer.AddRGBPoint(1.0, *to_rgb("FADE42"))
+        color_transfer.AddRGBPoint(1.0, *to_rgb("FEED42"))
         for ii, ss in enumerate([float(xx) / float(lutNum) for xx in range(lutNum)]):
             cc = color_transfer.GetColor(ss)
             table.SetTableValue(ii, *cc, 1.0)

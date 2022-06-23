@@ -166,7 +166,12 @@ def edmd(box, spheres, velocity=None, growth_rate=0.1, mass=1.0):
     else:
         assert len(mass) == N
 
-    sim = _cpp.Simulation(box, spheres, velocity, growth_rate, mass)
+    try:
+        cube = _cpp.Cube(*box)
+    except TypeError:
+        cube = box
+
+    sim = _cpp.Simulation(cube, spheres, velocity, growth_rate, mass)
     return sim
 
 

@@ -18,6 +18,7 @@
 
 #include <Eigen/Core>
 #include <vector>
+#include <memory>
 
 #include "Box.h"
 #include "Event.h"
@@ -43,10 +44,10 @@ class Simulation
 {
 public:
     // constructor and destructor
-    Simulation(const Box& box, std::vector<Sphere> spheres);
+    Simulation(std::shared_ptr<Box> box, std::vector<Sphere> spheres);
 
-    Simulation(const Box& box, Eigen::MatrixX4d sphereMatrix, Eigen::MatrixX3d velocities, Eigen::VectorXd growthRates,
-               Eigen::VectorXd masses);
+    Simulation(std::shared_ptr<Box> box, Eigen::MatrixX4d sphereMatrix, Eigen::MatrixX3d velocities,
+               Eigen::VectorXd growthRates, Eigen::VectorXd masses);
 
     // Creating configurations
     void SetInitialEvents();
@@ -83,7 +84,7 @@ public:
     }
 
     const int N; // number of spheres
-    const Box& box;
+    std::shared_ptr<Box> box;
 
     int ngrids; // number of cells in one direction
     double gtime = 0; // this is global clock
