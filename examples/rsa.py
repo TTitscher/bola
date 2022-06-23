@@ -9,7 +9,6 @@ def polydisperse():
 
     gc = bola.psd.GradingCurves.fuller(d_min=0.5)
     radii = bola.psd.sample_grading_curve(gc, L ** 3 * phi)
-    print(len(radii), flush=True)
     spheres = rsa(radii, (L, L, L))
 
     show(spheres, (L, L, L))

@@ -186,17 +186,60 @@ def stats_string(sim):
     info += "{:5.3f}s ".format(sim.t())
     return info
 
+def _arrange_radii(radii):
+    assert np.all(radii > 0.0)
+    r_sort = -np.sort(-radii)  # small hack to sort reversed
 
-def show(spheres, box):
+    spheres = np.zeros((len(radii), 4))
+    spheres[:, 3] = r_sort
+
+    approx_area = np.sum((2*radii)**2) 
+    Lmax = approx_area ** 0.5
+
+    x = spheres[0, 3]
+    y = 0.0
+    y_row = None
+
+    N = len(spheres) - 1
+    for i in range(N):
+        spheres[i, :2] = x, y
+
+        if y_row is None:
+            y_row = spheres[i, 3]
+
+        x += spheres[i, 3] + spheres[i + 1, 3]
+
+        if x > Lmax:
+            x = spheres[i + 1, 3]
+            y -= y_row + spheres[i + 1, 3]
+            y_row = None
+
+    # place last sphere separately to
+    spheres[N, :2] = x, y
+    return spheres
+
+def show(spheres_or_radii, box=None, filename=None):
     from . import visu
 
-    try:
-        l = box.l
-    except AttributeError:
-        l = box
+    if spheres_or_radii.ndim == 1:
+        spheres = _arrange_radii(spheres_or_radii)
+    else:
+        spheres  = spheres_or_radii
 
-    v = visu.SphereVisualizer(len(spheres))
-    v.add_box(*l)
 
-    v.update_data(spheres[:, :3], spheres[:, 3])
-    v.show()
+    v = visu.SphereVisualizer(len(spheres_or_radii))
+   
+    if box is not None:
+        try:
+            l = np.asarray(box.l)
+        except AttributeError:
+            l = np.asarray(box)
+        v.add_box(*l)
+        v.set_camera((2*l[0], 2*l[1], 3*l[2]), l/2)
+
+
+    v.update_data(spheres)
+    if filename is not None:
+        v.to_png(filename, magnification=3)
+    else:
+        v.show()
