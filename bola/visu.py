@@ -239,6 +239,11 @@ def show(spheres_or_radii, box=None, filename=None):
             l = np.asarray(box)
         v.add_box(*l)
         v.set_camera((2 * l[0], 2 * l[1], 3 * l[2]), l / 2)
+    else:
+        x0, x1 = np.min(spheres[:, 0]), np.max(spheres[:, 0])
+        y0, y1 = np.min(spheres[:, 1]), np.max(spheres[:, 1])
+        x,y = 0.5 * (x0 + x1), 0.5 * (y0 +y1)
+        v.set_camera((x, y, 1.5*(x1 + y1 - x0 - y0)), (x, y, 0))
 
     v.update_data(spheres)
     if filename is not None:
